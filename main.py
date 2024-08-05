@@ -2,13 +2,14 @@ import hashlib
 import base64
 import io
 import traceback
-
 import httpx
+import redis
+import numpy as np
+
+from loguru import logger
 from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
-import redis
 from PIL import Image
-import numpy as np
 
 from config import *
 
@@ -23,7 +24,13 @@ redis_client = redis.StrictRedis(
 )
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.1901.253'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Accept-Language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,zh-HK;q=0.7',
+    'Cache-Control': 'no-cache',
+    'priority': 'u=0, i',
+    'Pragma': 'no-cache',
 }
 
 
@@ -33,34 +40,39 @@ def calculate_md5_hash(data):
 
 
 def extract_main_color(img_url):
-    md5_hash = calculate_md5_hash(img_url)
+    try:
+        if CACHE_ENABLED:
+            cached_color = redis_client.get(img_url)
+            if cached_color:
+                return cached_color
+        # md5_hash = calculate_md5_hash(img_url)
+        response = httpx.get(img_url, headers=headers, follow_redirects=True)
+        if response.status_code != 200 and response.status_code != 304:
+            logger.error(f"请求图片 {img_url} 失败，状态码：{response.status_code}")
+            return "#FF8C66"
 
-    if CACHE_ENABLED:
-        cached_color = redis_client.get(md5_hash)
-        if cached_color:
-            return cached_color
+        img = Image.open(io.BytesIO(response.content))
+        img = img.resize((50, int(50 * img.size[1] / img.size[0])))
 
-    response = httpx.get(img_url, headers=headers)
-    if response.status_code != 200:
-        print(f"请求图片失败, 状态码: {response.status_code}")
-        return
+        pixels = np.array(img)
+        r, g, b = np.mean(pixels[:, :, 0]), np.mean(pixels[:, :, 1]), np.mean(pixels[:, :, 2])
+        main_color = '#{:02x}{:02x}{:02x}'.format(int(r), int(g), int(b))
 
-    img = Image.open(io.BytesIO(response.content))
-    img = img.resize((50, int(50 * img.size[1] / img.size[0])))
+        if CACHE_ENABLED:
+            redis_client.set(img_url, main_color, ex=CACHE_EXPIRE)
 
-    pixels = np.array(img)
-    r, g, b = np.mean(pixels[:, :, 0]), np.mean(pixels[:, :, 1]), np.mean(pixels[:, :, 2])
-    main_color = '#{:02x}{:02x}{:02x}'.format(int(r), int(g), int(b))
+        logger.info(f"图片 {img_url} 的主色调为 {main_color}")
 
-    if CACHE_ENABLED:
-        redis_client.set(md5_hash, main_color, ex=CACHE_EXPIRE)
+        return main_color
 
-    return main_color
+    except:
+        logger.error(f"处理图片 {img_url} 时出现错误: {traceback.format_exc()}")
+        return "#FF8C66"
 
 
 @app.before_request
 def before_request():
-    if request.path == '/api':  # api接口需要验证referer
+    if request.path == '/apis':  # api接口需要验证referer
         referer = request.headers.get('Referer')
         if not referer or not any(referer.startswith(allowed) for allowed in ALLOW_REFERER):
             return jsonify({"error": "无权访问"}), 403
@@ -76,6 +88,7 @@ def after_request(response):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    logger.info(f"{request.method} {request.path}")
     return jsonify({"message": "欢迎使用主色调提取API"})
 
 
@@ -83,9 +96,11 @@ def index():
 def handle_image_color():
     img_url = request.args.get("img") if request.method == 'GET' else request.json.get("img")
     if not img_url:
+        logger.info(f"{request.method} {request.path} | 缺少img参数")
         return jsonify({"error": "缺少img参数"}), 400
 
     try:
+        logger.info(f"{request.method} {request.path} | 提取图片 {img_url} 的主色调")
         color = extract_main_color(img_url)
         return jsonify({"RGB": color})
     except Exception as e:
@@ -94,6 +109,7 @@ def handle_image_color():
 
 @app.route('/reload', methods=['POST', 'GET'])
 def reload_cache():
+    logger.info(f"{request.method} {request.path}")
     try:
         redis_client.flushdb()  # 清空 Redis 缓存
         return jsonify({"message": "缓存已清空"}), 200
@@ -103,3 +119,4 @@ def reload_cache():
 
 if __name__ == '__main__':
     app.run(host=HOST, port=PORT, debug=DEBUG)
+    # print(extract_main_color("https://img.loliapi.cn/i/pc/img357.webp"))
