@@ -1,11 +1,12 @@
-HOST = '0.0.0.0'
-PORT = 6000
-DEBUG = False
+import os
 
-CACHE_ENABLED = True
-CACHE_EXPIRE = 3600 * 24
-REDIS_HOST = '127.0.0.1'
-REDIS_PORT = 6379
-REDIS_DB = 2
+DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 't']
 
-ALLOW_REFERER = ['https://blog.randomench.top', 'https://blog.randench.cn']
+CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'True').lower() in ['true', '1', 't']
+CACHE_EXPIRE = int(os.getenv('CACHE_EXPIRE', 3600 * 24))
+
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
+
+ALLOW_REFERER = os.getenv('ALLOW_REFERER', 'http://localhost:4000').split(',')

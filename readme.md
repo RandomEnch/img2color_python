@@ -29,15 +29,13 @@ python3 ./main.py
 
 必填参数img: url
 
-| 配置项           | 说明                     |
-| ---------------- | ------------------------ |
-| REDIS_HOST       | REDIS地址                |
-| REDIS_PORT       | REDIS端口                |
-| REDIS_DB         | REDIS数据库名            |
-| CACHE_ENABLED    | bool值 是否使用REDIS缓存 |
-| CACHE_EXPIRE     | int 缓存过期时间（秒）   |
-| DEBUG            | bool值，是否开启debug    |
-| HOST             | 地址                     |
-| PORT             | 端口                     |
-| ALLOWED_REFERERS | 允许的refer域名          |
+| 配置项           | 说明                    |
+| ---------------- |-----------------------|
+| REDIS_HOST       | REDIS地址               |
+| REDIS_PORT       | REDIS端口               |
+| REDIS_DB         | REDIS数据库名             |
+| CACHE_ENABLED    | bool值 是否使用REDIS缓存     |
+| CACHE_EXPIRE     | int 缓存过期时间（秒）         |
+| DEBUG            | bool值，是否开启debug       |
+| ALLOWED_REFERERS | 允许的refer域名，支持正则表达式（逗号分隔） |
 

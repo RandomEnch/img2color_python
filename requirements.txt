@@ -1,6 +1,6 @@
-pillow
-numpy
-redis
 flask
-httpx
 loguru
+redis
+numpy
+pillow
+httpx
