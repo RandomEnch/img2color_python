@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.py"
+    }
+  ],
+  "env": {
+    "DEBUG": "False",
+    "CACHE_ENABLED": "True",
+    "CACHE_EXPIRE": "86400",
+    "REDIS_HOST": "127.0.0.1",
+    "REDIS_PORT": "6379",
+    "REDIS_PASSWORD": "psw",
+    "ALLOW_REFERER": "http://localhost:4000"
+  }
+}
