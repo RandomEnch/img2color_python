@@ -1,6 +1,7 @@
 import hashlib
 import base64
 import io
+import os
 import re
 import traceback
 import httpx
@@ -8,14 +9,17 @@ import redis
 import numpy as np
 
 from loguru import logger
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image
 
-from config import *
-
 app = Flask(__name__)
 CORS(app)
+
+CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'False').lower() in ['true', '1', 't']
+CACHE_EXPIRE = int(os.getenv('CACHE_EXPIRE', 86400))
+REDIS_STR = os.getenv('REDIS_HOST', 'redis://default:********@****.upstash.io:6379')
+ALLOW_REFERER = os.getenv('ALLOW_REFERER', '').split(',')
 
 if CACHE_ENABLED:
     redis_client = redis.StrictRedis.from_url(REDIS_STR, decode_responses=True)
