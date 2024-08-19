@@ -10,11 +10,11 @@ import numpy as np
 
 from loguru import logger
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+# from flask_cors import CORS
 from PIL import Image
 
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
 
 CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'False').lower() in ['true', '1', 't']
 CACHE_EXPIRE = int(os.getenv('CACHE_EXPIRE', 86400))

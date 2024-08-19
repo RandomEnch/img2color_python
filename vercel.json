@@ -1,7 +1,16 @@
 {
   "version": 2,
-  "rewrites": [
-      { "source": "/(.*)", "destination": "/api/app" }
+  "builds": [
+    {
+      "src": "index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.py"
+    }
   ],
   "env": {
     "CACHE_ENABLED": "False",
