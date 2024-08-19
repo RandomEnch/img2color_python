@@ -17,13 +17,8 @@ from config import *
 app = Flask(__name__)
 CORS(app)
 
-redis_client = redis.StrictRedis(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    password=REDIS_PASSWORD,
-    ssl=True,
-    decode_responses=True
-)
+if CACHE_ENABLED:
+    redis_client = redis.StrictRedis.from_url(REDIS_STR, decode_responses=True)
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -76,8 +71,11 @@ def extract_main_color(img_url):
 def before_request():
     if request.path == '/apis':  # API 接口需要验证 Referer
         referer = request.headers.get('Referer')
-        if not referer:
-            return jsonify({"error": "无权访问"}), 403
+        # if not referer:
+        #     return jsonify({"error": "无权访问"}), 403
+
+        if not ALLOW_REFERER:
+            return
 
         # 检查 referer 是否符合任一允许的模式（普通字符串或正则表达式）
         allowed = False
