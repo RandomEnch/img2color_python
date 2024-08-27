@@ -10,10 +10,12 @@ from loguru import logger
 from flask import Flask, request, jsonify
 from PIL import Image
 
-from config import ALLOW_REFERER, CACHE_ENABLED, CACHE_EXPIRE, redis_client
+from config import ALLOW_REFERER, CACHE_ENABLED, CACHE_EXPIRE
+
+if CACHE_ENABLED:
+    from config import redis_client
 
 app = Flask(__name__)
-
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -37,6 +39,8 @@ def extract_main_color(img_url):
         if CACHE_ENABLED:
             cached_color = redis_client.get(md5_hash)
             if cached_color:
+                if isinstance(cached_color, bytes):
+                    cached_color = cached_color.decode('utf-8')
                 return cached_color
         response = httpx.get(img_url, headers=headers, follow_redirects=True)
         if response.status_code != 200 and response.status_code != 304:
