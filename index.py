@@ -1,28 +1,19 @@
 import hashlib
 import base64
 import io
-import os
 import re
 import traceback
 import httpx
-import redis
 import numpy as np
 
 from loguru import logger
 from flask import Flask, request, jsonify
-# from flask_cors import CORS
 from PIL import Image
 
+from config import ALLOW_REFERER, CACHE_ENABLED, CACHE_EXPIRE, redis_client
+
 app = Flask(__name__)
-# CORS(app)
 
-CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'False').lower() in ['true', '1', 't']
-CACHE_EXPIRE = int(os.getenv('CACHE_EXPIRE', 86400))
-REDIS_STR = os.getenv('REDIS_HOST', 'redis://default:********@****.upstash.io:6379')
-ALLOW_REFERER = os.getenv('ALLOW_REFERER', '').split(',')
-
-if CACHE_ENABLED:
-    redis_client = redis.StrictRedis.from_url(REDIS_STR, decode_responses=True)
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -42,11 +33,11 @@ def calculate_md5_hash(data):
 
 def extract_main_color(img_url):
     try:
+        md5_hash = calculate_md5_hash(img_url)
         if CACHE_ENABLED:
-            cached_color = redis_client.get(img_url)
+            cached_color = redis_client.get(md5_hash)
             if cached_color:
                 return cached_color
-        # md5_hash = calculate_md5_hash(img_url)
         response = httpx.get(img_url, headers=headers, follow_redirects=True)
         if response.status_code != 200 and response.status_code != 304:
             logger.error(f"请求图片 {img_url} 失败，状态码：{response.status_code}")
@@ -60,7 +51,7 @@ def extract_main_color(img_url):
         main_color = '#{:02x}{:02x}{:02x}'.format(int(r), int(g), int(b))
 
         if CACHE_ENABLED:
-            redis_client.set(img_url, main_color, ex=CACHE_EXPIRE)
+            redis_client.set(md5_hash, main_color, ex=CACHE_EXPIRE)
 
         logger.info(f"图片 {img_url} 的主色调为 {main_color}")
 
@@ -127,6 +118,7 @@ def handle_image_color():
         return jsonify({"error": f"提取主色调失败：{e}", "img_url": img_url, "traceback": traceback.format_exc()}), 500
 
 
+#
 @app.route('/reload', methods=['POST', 'GET'])
 def reload_cache():
     logger.info(f"{request.method} {request.path}")
@@ -137,5 +129,5 @@ def reload_cache():
         return jsonify({"error": f"清空缓存失败：{e}", "traceback": traceback.format_exc()}), 500
 
 
-# if __name__ == '__main__':
-#     app.run(host=HOST, port=PORT, debug=DEBUG)
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5000)

@@ -14,7 +14,7 @@
 
 5. 国内访问需绑定自定义域名
 
-6. [redis数据库](https://upstash.com/)
+6. 创建[redis数据库](https://upstash.com/)
 
 ## 服务器部署
 
@@ -22,16 +22,16 @@
 
 1. 安装依赖
 
-```bash
-pip3 install -r ./requirements.txt
-```
+    ```bash
+    pip3 install -r ./requirements.txt
+    ```
 
 2. 修改 `config.py` 配置，设置端口和redis数据库以及准许调用api的referer
 3. 运行
 
-```bash
-python3 ./main.py
-```
+    ```bash
+    python3 ./index.py
+    ```
 
 4. 进行nginx反代、进程守护等操作，绑定域名
 
@@ -43,10 +43,11 @@ python3 ./main.py
 
 必填参数img: url
 
-| 配置项           | 类型   | 说明                                                     |
-| ---------------- | ------ | -------------------------------------------------------- |
-| REDIS_STR        | string | REDIS连接字符串(redis://default:xxx@xxx.upstash.io:6379) |
-| CACHE_ENABLED    | bool   | 是否使用REDIS缓存(True/False)(不设置默认False)           |
-| CACHE_EXPIRE     | int    | 缓存过期时间(秒)(可选，默认86400)                        |
-| ALLOWED_REFERERS | string | 允许的refer域名，支持正则表达式(逗号分隔)                |
+| 配置项           | 类型   | 说明                                  |
+| ---------------- | ------ |-------------------------------------|
+| CACHE_ENABLED    | bool   | 是否使用REDIS缓存(True/False)(不设置默认False) |
+| CACHE_EXPIRE     | int    | 缓存过期时间(秒)(可选，默认86400)               |
+| ALLOWED_REFERERS | string | 允许的refer域名，支持正则表达式(逗号分隔)            |
+| REDIS_HOST       | string | REDIS数据库地址(不设置默认evolving-marmoset-52528.upstash.io)          |
+| REDIS_PASSWORD   | string | REDIS数据库密码(启用缓存必填)                  |
 
