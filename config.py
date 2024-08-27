@@ -1,7 +1,7 @@
 import os
 import redis
 
-CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'False') == 'True'
+CACHE_ENABLED = True
 CACHE_EXPIRE = int(os.getenv('CACHE_EXPIRE', 86400))
 ALLOW_REFERER = os.getenv('ALLOW_REFERER', '').split(',')
 

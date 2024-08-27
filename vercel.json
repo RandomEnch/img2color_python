@@ -11,11 +11,5 @@
       "src": "/(.*)",
       "dest": "index.py"
     }
-  ],
-  "env": {
-    "CACHE_ENABLED": "False",
-    "CACHE_EXPIRE": "86400",
-    "REDIS_STR": "redis://default:********@****.upstash.io:6379",
-    "ALLOW_REFERER": ""
-  }
+  ]
 }
