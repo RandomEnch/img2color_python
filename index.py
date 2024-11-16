@@ -63,7 +63,7 @@ def extract_main_color(img_url):
 
     except:
         logger.error(f"处理图片 {img_url} 时出现错误: {traceback.format_exc()}")
-        return "#FF8C66"
+        return "#7B37D3"
 
 
 @app.before_request
